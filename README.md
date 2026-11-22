@@ -22,25 +22,88 @@ The rules:
 
 ## What gets installed
 
-```
-.claude/agents/review-correctness.md
-.claude/agents/review-security.md
-.claude/agents/review-tests.md
-.claude/skills/review-round/SKILL.md   the orchestration: start, wait, fix, re-round, merge
-docs/REVIEW_AND_MERGE.md               rules + a "Project gates" section with TODO(project) placeholders
-CLAUDE.md                              optional "Review and merge" section (asked)
-.gitignore                             optional ".scratch/" entry (asked)
-```
+| Template in this repo | Path in your project |
+|---|---|
+| `templates/agents/review-correctness.md` | `.claude/agents/review-correctness.md` |
+| `templates/agents/review-security.md` | `.claude/agents/review-security.md` |
+| `templates/agents/review-tests.md` | `.claude/agents/review-tests.md` |
+| `templates/skills/review-round/SKILL.md` | `.claude/skills/review-round/SKILL.md` (start, wait, fix, re-round, merge) |
+| `templates/docs/REVIEW_AND_MERGE.md` | `docs/REVIEW_AND_MERGE.md` (rules + section 4 "Project gates" to fill in) |
+| `templates/CLAUDE.snippet.md` | optional: appended to `CLAUDE.md` between `<!-- reviewer-skill:start -->` and `<!-- reviewer-skill:end -->` |
+| — | optional: a `.scratch/` line in `.gitignore` (the review reports) |
 
-The installer **never changes an existing file without asking**. For a file that exists with
-different content it asks: skip (default), overwrite, or write a `.reviewer-skill.new` file
-next to it. Without a terminal (for example when an agent runs it), it only creates missing
-files and leaves every existing file alone. `--dry-run` shows what would happen.
+There are two ways to install: a Claude agent copies the files (no network code runs), or
+the npm installer copies them. Both start in a feature branch.
 
-## Install
+## Install with a Claude agent (local, no npx)
+
+This path runs no downloaded code. The agent only reads the templates and writes files.
+Give your Claude Code session this section and the tag to use, for example: *"Install
+reviewer-skill v0.2.0 as described in its README section 'Install with a Claude agent'."*
+
+Steps for the agent:
+
+1. **Branch first.** Run `git branch --show-current` and `git status --short`. Never install
+   on the default branch. Create a branch or a worktree, for example
+   `git switch -c chore/reviewer-skill`. Note every file that is already modified: those
+   changes are not part of this install.
+2. **Get the templates without running them.** Use a tag that is at least 7 days old
+   (release cooldown):
+   ```sh
+   git clone --depth 1 --branch v0.2.0 https://github.com/itinance/reviewer-skill.git /tmp/reviewer-skill-v0.2.0
+   git -C /tmp/reviewer-skill-v0.2.0 log -1 --format='%H %cI'   # tag commit and date; compare with the tag on GitHub
+   ```
+   Do not run anything from the clone. Read the files only.
+3. **Copy the 5 files** in the table above with Read and Write. If a destination exists
+   with other content, do not overwrite it: show the human the difference and ask.
+4. **CLAUDE.md and .gitignore.** If `CLAUDE.md` does not contain
+   `<!-- reviewer-skill:start -->`, append the text of `templates/CLAUDE.snippet.md` between
+   the start and end markers. If no `.gitignore` line ignores `.scratch/`, add `.scratch/`.
+   Check with `git check-ignore -q .scratch/reviews/x.md`.
+5. **Fill in section 4 of `docs/REVIEW_AND_MERGE.md` from repo facts only.** Write the
+   source file after each value. The section says what to read for each gate. In short:
+   - Test and lint: the task runner (Justfile, Makefile, package.json scripts) and the CI
+     workflows (`.github/workflows/*.yml`, job names). Prefer the project's safe test
+     wrapper (for example one with a throwaway database). Copy forbidden commands from
+     CLAUDE.md into the gate.
+   - Worktree install: the real layout, with the lockfile and install scripts off, for
+     example `npm ci --ignore-scripts`, `pnpm install --frozen-lockfile --ignore-workspace
+     --ignore-scripts` for a standalone app in a workspace, `uv sync --frozen`.
+   - Supply chain: `.npmrc` (`ignore-scripts`), `pnpm-workspace.yaml` (`minimumReleaseAge`,
+     `onlyBuiltDependencies`, `ignoredBuiltDependencies`), `bunfig.toml`, the uv/pip config
+     (`exclude-newer`). If no setting enforces a cooldown, write "not enforced by config;
+     the security reviewer checks publish dates".
+   - Hard rules: grep the tests for existing guard tests and name the file and the test
+     functions. A rule without a guard test: "no guard test yet". Never invent one.
+   - Human-approval paths: find the real directories (for example
+     `find . -type d -name versions` for migrations). Do not assume a framework default.
+   - AI review bot: copy the project's existing rules from CLAUDE.md, and name removed bots.
+   - Sensitive data: list the classes only (customer names, personal emails, live database
+     rows, `.env` contents). Never write a real value. If there is no check script, say so.
+6. **Verify section 4 is complete.** This prints `0` when every gate is filled in:
+   ```sh
+   sed -n '/^## 4\./,/^## 5\./p' docs/REVIEW_AND_MERGE.md | grep -c 'TODO(project)'
+   ```
+7. **Commit only the install.** Stage the installed files, `CLAUDE.md` and `.gitignore` by
+   name (never `git add -A`). For any other change in the checkout, ask the human, or put it
+   in a separate commit.
+8. **Open a draft PR** and make it the first review round of the new process. The new agent
+   types load only after a restart of Claude Code or `/agents`. In the same session, start
+   each reviewer with `subagent_type: "general-purpose"` and the full text of its agent file
+   in the prompt.
+9. **Clean up:** `rm -rf /tmp/reviewer-skill-v0.2.0`.
+
+**If the files were already written on the default branch** (for example by an older
+installer): create the branch or worktree, copy the installed files there, apply the
+`CLAUDE.md` and `.gitignore` changes there, and check that the files are the same
+(`diff -r`). Then, on the default branch, delete the new files and run
+`git restore CLAUDE.md .gitignore`. Leave unrelated changes alone.
+
+## Install with npm
 
 The package has **no dependencies and no install scripts**. Install it with an exact version.
-Never use `@latest`, a bare package name, or `-y` / `--yes`.
+Never use `@latest`, a bare package name, or `-y` / `--yes`. `npx` downloads and runs code:
+if your rules forbid fetch-and-execute, use the agent path above.
 
 ### 1. Check the release age first
 
@@ -49,50 +112,55 @@ window in which a hijacked account or a bad publish does the most damage.
 
 ```sh
 npm view reviewer-skill time --json      # publish date of every version
-npm view reviewer-skill@0.1.0 dist.integrity
+npm view reviewer-skill@0.2.0 dist.integrity
 ```
 
-### 2. Run the installer in your project root
+### 2. Run the installer in a feature branch of your project
+
+The installer refuses to write on the default branch (`origin/HEAD`, else `main` or
+`master`). It reads the branch with your local `git`; that is the only program it runs.
+Create a branch first: `git switch -c chore/reviewer-skill`.
 
 `--before <date>` lets npm enforce the cooldown: if the pinned version was published after
 that date, npx stops with `notarget` before it downloads or runs anything.
 
 ```sh
 # macOS
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.1.0 install --dry-run
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.1.0 install
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.2.0 install --dry-run
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.2.0 install
 
 # Linux
-npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.1.0 install
+npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.2.0 install
 ```
 
 `npx` asks "Ok to proceed?" before it downloads the package. Read it and answer it; do not
 suppress it.
 
+In a terminal, the installer asks before each change to an existing file and before the
+optional `CLAUDE.md` and `.gitignore` edits. Without a terminal (an agent runs it), it only
+creates missing files. An agent names the optional edits explicitly:
+
+```sh
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.2.0 install --append-claude-md --gitignore-scratch
+```
+
+Both edits are idempotent: the `CLAUDE.md` section is added once (marker check), and the
+`.scratch/` line only if no line ignores `.scratch` yet. There is no flag that answers every
+question with yes.
+
 With Bun (Bun does not run lifecycle scripts of packages by default):
 
 ```sh
-bunx reviewer-skill@0.1.0 install
+bunx reviewer-skill@0.2.0 install
 ```
 
-Without the npm registry, from a git tag:
-
-```sh
-git clone --depth 1 --branch v0.1.0 https://github.com/itinance/reviewer-skill.git /tmp/reviewer-skill
-git -C /tmp/reviewer-skill rev-parse HEAD     # compare with the commit of the v0.1.0 tag on GitHub
-node /tmp/reviewer-skill/bin/reviewer-skill.js install --target .
-```
-
-Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.1.0`.
+Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.2.0`.
 
 ### 3. After the install
 
-1. Fill in the project gates: `grep -n "TODO(project)" docs/REVIEW_AND_MERGE.md`
-   (test command, worktree install command, hard rules, sensitive-data check, release cooldown,
-   optional review bot and merge checks).
-2. Check that `.scratch/` is git-ignored: `git check-ignore -q .scratch/reviews/x.md && echo ok`.
-3. Restart Claude Code (or open `/agents`) so that it loads the new agents.
-4. Commit the files.
+Follow steps 5 to 8 of the agent path: fill in section 4 from repo facts, verify it, commit
+only the installed files, open a draft PR as the first review round, and restart Claude Code
+(or open `/agents`) so that it loads the new agents.
 
 ## Use
 
@@ -104,16 +172,21 @@ new head sha to the same 3 agents until all are clean.
 ## Commands
 
 ```
-reviewer-skill [install] [--target <dir>] [--dry-run]
+reviewer-skill [install] [options]
+  --target <dir>           project root (default: current directory)
+  --dry-run                show what would happen; write nothing
+  --append-claude-md       append the marked review section to CLAUDE.md (once)
+  --gitignore-scratch      add ".scratch/" to .gitignore (once)
+  --allow-default-branch   install on the default branch (normally refused)
 reviewer-skill print-snippet      print the CLAUDE.md section
 reviewer-skill --help | --version
 ```
 
 ## Update
 
-Run the installer again with the new exact version (after its cooldown). Files that you did not
-change are reported as `unchanged` or are offered for overwrite; for files that you changed,
-choose `n` and compare the `.reviewer-skill.new` file with your version.
+Run the installer again with the new exact version (after its cooldown), or repeat the agent
+path with the new tag. A file that differs from the new template is never overwritten without
+asking; choose `n` to get a `.reviewer-skill.new` file and compare it with your version.
 
 ## Development
 

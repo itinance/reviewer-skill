@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   install,
+  branchInfo,
   FILES,
   readTemplate,
   snippetBlock,
@@ -180,4 +181,100 @@ test('CLI: --version, print-snippet, unknown argument', async () => {
   assert.equal((await run(process.execPath, [BIN, '--version'])).stdout.trim(), pkg.version);
   assert.equal((await run(process.execPath, [BIN, 'print-snippet'])).stdout, await snippetBlock());
   await assert.rejects(run(process.execPath, [BIN, '--force']), /unknown argument/);
+});
+
+// --- 0.2.0: explicit optional edits, branch guard ---------------------------------
+
+test('flags: non-interactive run makes the two named edits, once', async () => {
+  const dir = await tmpProject();
+  await fs.writeFile(path.join(dir, 'CLAUDE.md'), '# Mine\n');
+  await fs.writeFile(path.join(dir, '.gitignore'), 'dist/\n');
+  const opts = { target: dir, appendClaudeMd: true, gitignoreScratch: true };
+  const first = byPath(await install(opts));
+  assert.equal(first['CLAUDE.md'].action, 'appended');
+  assert.equal(first['.gitignore'].action, 'appended');
+  const second = byPath(await install(opts));
+  assert.equal(second['CLAUDE.md'].action, 'unchanged');
+  assert.equal(second['.gitignore'].action, 'unchanged');
+  const claude = await fs.readFile(path.join(dir, 'CLAUDE.md'), 'utf8');
+  assert.equal(claude.split(SNIPPET_START).length, 2);
+  assert.equal(await fs.readFile(path.join(dir, '.gitignore'), 'utf8'), 'dist/\n.scratch/\n');
+});
+
+test('flags: an existing .scratch line is kept as it is', async () => {
+  const dir = await tmpProject();
+  await fs.writeFile(path.join(dir, '.gitignore'), '/.scratch\n');
+  const res = byPath(await install({ target: dir, gitignoreScratch: true }));
+  assert.equal(res['.gitignore'].action, 'unchanged');
+  assert.equal(await fs.readFile(path.join(dir, '.gitignore'), 'utf8'), '/.scratch\n');
+});
+
+test('flags: with a terminal, a named edit is not asked again', async () => {
+  const dir = await tmpProject();
+  const { ask, asked } = scripted([]);
+  const res = byPath(await install({ target: dir, ask, appendClaudeMd: true, gitignoreScratch: true }));
+  assert.deepEqual(asked, []);
+  assert.equal(res['CLAUDE.md'].action, 'created');
+  assert.equal(res['.gitignore'].action, 'created');
+});
+
+test('flags: dry run reports the named edits and writes nothing', async () => {
+  const dir = await tmpProject();
+  await fs.writeFile(path.join(dir, 'CLAUDE.md'), '# Mine\n');
+  const res = byPath(await install({ target: dir, dryRun: true, appendClaudeMd: true, gitignoreScratch: true }));
+  assert.equal(res['CLAUDE.md'].action, 'would-append');
+  assert.equal(res['.gitignore'].action, 'would-create');
+  assert.equal(await fs.readFile(path.join(dir, 'CLAUDE.md'), 'utf8'), '# Mine\n');
+  await assert.rejects(fs.access(path.join(dir, '.gitignore')));
+});
+
+async function gitRepo(branch = 'main') {
+  const dir = await tmpProject();
+  await run('git', ['-C', dir, 'init', '-q', '-b', branch]);
+  return dir;
+}
+
+test('branch guard: refuses on main, writes nothing', async () => {
+  const dir = await gitRepo('main');
+  await assert.rejects(install({ target: dir }), /default branch "main"/);
+  await assert.rejects(fs.access(path.join(dir, '.claude')));
+});
+
+test('branch guard: allowed with allowDefaultBranch, and on a feature branch', async () => {
+  const onMain = await gitRepo('main');
+  assert.equal(byPath(await install({ target: onMain, allowDefaultBranch: true }))[FILES[0].dest].action, 'created');
+  const feature = await gitRepo('chore/reviewer-skill');
+  assert.equal(byPath(await install({ target: feature }))[FILES[0].dest].action, 'created');
+});
+
+test('branch guard: origin/HEAD decides the default branch', async () => {
+  const dir = await gitRepo('develop');
+  await run('git', ['-C', dir, 'symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/develop']);
+  await assert.rejects(install({ target: dir }), /default branch "develop"/);
+  const info = await branchInfo(dir);
+  assert.deepEqual(info.defaults, ['develop']);
+});
+
+test('branch guard: dry run on main reports would-refuse', async () => {
+  const dir = await gitRepo('main');
+  const res = await install({ target: dir, dryRun: true });
+  assert.equal(res[0].action, 'would-refuse');
+  assert.deepEqual(await fs.readdir(dir), ['.git']);
+});
+
+test('CLI: refuses on main with exit 1, explicit flags work on a branch', async () => {
+  const main = await gitRepo('main');
+  await assert.rejects(run(process.execPath, [BIN, 'install', '--target', main]), /default branch/);
+  const dir = await gitRepo('chore/x');
+  const { stdout } = await run(process.execPath, [BIN, 'install', '--target', dir, '--append-claude-md', '--gitignore-scratch']);
+  assert.match(stdout, /created\s+CLAUDE\.md/);
+  assert.equal(await fs.readFile(path.join(dir, '.gitignore'), 'utf8'), '.scratch/\n');
+});
+
+test('docs template: the open-gate marker appears only in section 4', async () => {
+  const text = await readTemplate('docs/REVIEW_AND_MERGE.md');
+  const s4 = text.slice(text.indexOf('\n## 4.'), text.indexOf('\n## 5.'));
+  const all = text.split('TODO(project)').length - 1;
+  assert.ok(all > 0);
+  assert.equal(s4.split('TODO(project)').length - 1, all);
 });

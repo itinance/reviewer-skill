@@ -3,9 +3,10 @@
 These rules apply to every pull request, also to small diffs, docs, specs and dependency
 bumps. They add to `CLAUDE.md` and do not repeat it.
 
-Installed by `reviewer-skill`. Fill in every `TODO(project)` in section 4. Find them with
-`grep -n "TODO(project)" docs/REVIEW_AND_MERGE.md`. A gate that still says `TODO(project)`
-does not exist yet: reviewers report it as a note, they do not invent one.
+Installed by `reviewer-skill`. Section 4 holds the project gates. Each open gate carries a
+TODO marker. Fill in every gate from facts in this repository, and name the file that each
+fact comes from. A gate that is still open does not exist yet: reviewers report it as a
+note, they do not invent one.
 
 ## 1. Three separate reviewers per round
 
@@ -55,44 +56,65 @@ does not exist yet: reviewers report it as a note, they do not invent one.
 
 ## 4. Project gates
 
-<!-- Fill in each TODO(project). Delete a line that does not apply, and write "none". -->
+<!--
+Replace each open marker with a fact from this repository and its source, for example
+"`make test` (source: Makefile, .github/workflows/ci.yml job `test`)". A line that does not
+apply: write "none". Never write a guess, and never write a real sensitive value.
+-->
 
 ### 4.1 Commands
 
-- Test command: TODO(project), for example `npm test` or `uv run pytest`.
+Read the task runner (Justfile, Makefile, package.json scripts), the CI workflows
+(`.github/workflows/*.yml`, job names) and CLAUDE.md first.
+
+- Test command: TODO(project). Use the project's safe wrapper (for example one that uses
+  a throwaway database), not a raw `pytest` or `npm test`, if the project has one.
+- Forbidden commands: TODO(project), for example "plain `pytest` hits the live database"
+  (source: CLAUDE.md), or "none".
 - Lint and type check: TODO(project).
 - Dependency install in a throwaway review worktree, from the lockfile, with install
-  scripts off: TODO(project), for example `npm ci --ignore-scripts`.
-- CI workflow to compare job counts against: TODO(project), for example `ci.yml`.
+  scripts off, for the real layout: TODO(project). Examples: `npm ci --ignore-scripts`;
+  `pnpm install --frozen-lockfile --ignore-scripts` (add `--ignore-workspace` for a
+  standalone app inside a workspace); `uv sync --frozen`.
+- CI workflow and job set to compare job counts against: TODO(project).
 
 ### 4.2 Hard rules
 
-- Rules that a PR must never weaken, with their guard tests: TODO(project), for example
-  "the app never sends email to end users (`tests/test_no_outbound_email.py`)".
+- Rules that a PR must never weaken, each with its guard test (file and test function):
+  TODO(project). Find the guard tests with a grep over the tests. A rule without a guard
+  test: write "no guard test yet". Do not invent a test.
 
 ### 4.3 Sensitive data
 
-- What counts as sensitive in this project: TODO(project), for example customer data,
-  personal data, production ids.
-- Sensitive-data check on the diff, the commit messages and the PR body: TODO(project) or
-  "none". The check must print counts only, never the matched text.
+- Classes of sensitive data in this project: TODO(project), for example customer names,
+  personal emails, live database rows, `.env` contents. Classes only: never a real value.
+- Sensitive-data check on the diff, the commit messages and the PR body: TODO(project).
+  If the project has no such script, write "none; reviewers report file:line and counts
+  only". A check must print counts only, never the matched text.
 
 ### 4.4 Supply chain
 
-- Exact version pins: TODO(project), for example "all direct dependencies".
-- Release cooldown per ecosystem (at least 7 days): TODO(project), for example "npm 7 days,
-  PyPI 7 days".
-- Install scripts: off (`ignore-scripts=true`) unless a package is listed here:
-  TODO(project).
+Read `.npmrc`, `pnpm-workspace.yaml` (`minimumReleaseAge`, `onlyBuiltDependencies`,
+`ignoredBuiltDependencies`), `bunfig.toml` and the uv/pip config (`exclude-newer`).
+
+- Exact version pins: TODO(project).
+- Release cooldown per ecosystem (at least 7 days): TODO(project). Write the setting that
+  enforces it. If no config enforces it, write "not enforced by config; the security
+  reviewer checks publish dates". Never claim a cooldown that no config enforces.
+- Install scripts: TODO(project), for example "off (`ignore-scripts=true` in .npmrc);
+  allowed only for the packages in `onlyBuiltDependencies`".
 
 ### 4.5 Extra merge gates
 
-- AI review bot (optional): TODO(project) or "none". If used: keep it paused until the 3
-  reviewers are clean, then trigger it once. A pause posted right after `gh pr create` does
-  not stop the first review: open the PR as a draft, pause the bot, wait for its
-  confirmation, then mark the PR ready.
+- AI review bot: TODO(project). Copy the project's own rules for it (CLAUDE.md), for
+  example "manual trigger only, backend PRs only", and name bots that were removed; or
+  "none". If a bot is used: keep it paused until the 3 reviewers are clean, then trigger it
+  once. A pause posted right after `gh pr create` does not stop the first review: open the
+  PR as a draft, pause the bot, wait for its confirmation, then mark the PR ready.
 - Checks before a merge (for example "no live deploy running"): TODO(project) or "none".
-- Paths or PR types that need a human approval: TODO(project) or "none".
+- Paths or PR types that need a human approval: TODO(project) or "none". Use the real
+  paths (find them, for example `find . -type d -name versions` for migrations); do not
+  assume a framework's default layout.
 
 ## 5. Decisions
 
