@@ -98,6 +98,10 @@ sections 3 and 4):
 If the head changed after the clean round (a fix, or changes taken in from the base
 branch), that is a new round first: send the new sha to the same 3 agents.
 
+Take the base branch into the PR (in the project's merge style) only when there is a
+conflict or the base changed code that the PR touches. Do not take it in on every change
+only to stay current.
+
 ## When the human asks to skip a step
 
 The rules above are the human's own process, so the human may change them for one PR. Say
@@ -113,7 +117,8 @@ PRs"). Do it only after the human confirms, and write the exception in the PR bo
 | Small diff, docs or spec PR | Still all 3 reviewers |
 | Reviewer reports a non-blocking finding | Fix it in this PR |
 | Finding needs a design choice | Ask the human |
-| Base branch taken into the PR | New head: a new round to the same 3 agents |
+| Conflict, or the base changed code the PR touches | Take the base in (project's style), then a new round to the same 3 agents |
+| The base moved, no conflict, no overlap | Nothing; do not take it in only to stay current |
 | PR from a fork | Reviewers only read; nobody runs its code |
 
 ## Common mistakes

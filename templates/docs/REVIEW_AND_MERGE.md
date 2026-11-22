@@ -21,9 +21,11 @@ note, they do not invent one.
   uses. They never edit, never comment on GitHub, never merge.
 - "Read only" is a rule in the agent prompt, not a tool limit. The agents need `Write` for
   the report file, and `Bash` can write anywhere.
-- The reviewers do not run the PR's code or tests unless section 4.1 allows it. The tests
-  reviewer reads the CI results for the head. For a PR from a fork
-  (`gh pr view <pr> --json isCrossRepository` is `true`), nobody runs its code.
+- Tests come from CI. The reviewers read the CI results on the head. They run code
+  themselves only when CI cannot answer a question, and then in a throwaway worktree that
+  they remove after (section 4.1). A fresh install per round is expensive: avoid it. For a
+  PR from a fork (`gh pr view <pr> --json isCrossRepository` is `true`), nobody runs its
+  code.
 - Each reviewer writes its full report to `.scratch/reviews/<pr>-<area>[-rN].md`
   (git-ignored) and replies with only: the verdict (CLEAN or FINDINGS), the number of
   findings, and a one-line title for each blocking finding.
@@ -46,9 +48,12 @@ note, they do not invent one.
 
 - Merge only when all 3 reviewers are CLEAN on the current head, and every gate in
   section 4 is green.
-- Merge exactly the head that the reviewers saw clean, with the method from section 4.5
-  (for example `gh pr merge <pr> --match-head-commit <sha>` plus the method flag). Every new
-  head, also one that brings in the base branch, gets a new round first.
+- Keep the project's own merge style (section 4.5). Merge exactly the head that the
+  reviewers saw clean (for example `gh pr merge <pr> --match-head-commit <sha>` plus the
+  method flag).
+- Take the base branch into the work branch when there is a conflict, or when the base
+  changed code that the PR touches. That push starts a new review round. Do not take the
+  base in on every change only to stay current.
 - Run each safety check on its own and read its result before you start the merge.
 - After the merge: CI on the base branch is green.
 
@@ -70,8 +75,10 @@ Read the task runner (Justfile, Makefile, package.json scripts), the CI workflow
 - Forbidden commands: TODO(project), for example "plain `pytest` hits the live database"
   (source: CLAUDE.md), or "none".
 - Lint and type check: TODO(project).
-- Local runs by reviewers: TODO(project). Write "none; reviewers read the CI results" (the
-  default), or the exact command that a reviewer may run and where.
+- Local run when CI cannot answer: TODO(project). The install and test command for a
+  throwaway worktree, from the lockfile, with install scripts off, for the real layout (for
+  example `npm ci --ignore-scripts && npm test`, or `uv sync --frozen && uv run pytest`); or
+  "none; reviewers use CI only".
 - CI workflow and job set to compare job counts against: TODO(project).
 
 ### 4.2 Hard rules

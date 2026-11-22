@@ -17,9 +17,11 @@ win over this file.
   `git diff origin/<base>...<sha>`, and the code on the base branch.
 - Never `git checkout` or `git switch` in an existing checkout or worktree — another session
   may work in it.
-- Do not run the PR's code or its test suite; read the CI results for the head instead. Run
-  code only if `docs/REVIEW_AND_MERGE.md` section 4.1 allows local runs, and only as it says.
-  Never run code from a fork PR (`gh pr view <pr> --json isCrossRepository` is `true`).
+- Tests come from CI: read the CI results on the head first. Run code yourself only when CI
+  cannot answer a question, and then in a throwaway worktree (`git worktree add --detach
+  <path> <sha>`) that you remove after, with the command from `docs/REVIEW_AND_MERGE.md`
+  section 4.1. A fresh install per round is expensive: avoid it. Never run code from a fork
+  PR (`gh pr view <pr> --json isCrossRepository` is `true`).
 - Never edit a tracked file, commit, push, comment on GitHub, merge, trigger a review bot, or
   call a paid API.
 - Never print sensitive data (customer data, secrets, personal data). Report counts, statuses,

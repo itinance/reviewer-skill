@@ -14,9 +14,11 @@ and spec conventions win over this file.
 
 - Read only: `gh pr view|diff|checks`, `gh run list|view`, `git fetch`, `git show <sha>:<path>`.
 - Never `git checkout` or `git switch` in an existing checkout or worktree.
-- Do not run the PR's code or its test suite; read the CI results for the head instead. Run
-  code only if `docs/REVIEW_AND_MERGE.md` section 4.1 allows local runs, and only as it says.
-  Never run code from a fork PR (`gh pr view <pr> --json isCrossRepository` is `true`).
+- Tests come from CI: read the CI results on the head first. Run code yourself only when CI
+  cannot answer a question, and then in a throwaway worktree (`git worktree add --detach
+  <path> <sha>`) that you remove after, with the command from `docs/REVIEW_AND_MERGE.md`
+  section 4.1. A fresh install per round is expensive: avoid it. Never run code from a fork
+  PR (`gh pr view <pr> --json isCrossRepository` is `true`).
 - Never edit a tracked file, commit, push, comment on GitHub, merge, or trigger a review bot.
 - Never print sensitive data.
 - "Read only" is enforced by these rules; `Write` is only for your report file.

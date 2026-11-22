@@ -39,7 +39,7 @@ the npm installer copies them. Both start in a feature branch.
 
 This path runs no downloaded code. The agent only reads the templates and writes files.
 Give your Claude Code session this section and the tag to use, for example: *"Install
-reviewer-skill v0.3.0 as described in its README section 'Install with a Claude agent'."*
+reviewer-skill v0.3.1 as described in its README section 'Install with a Claude agent'."*
 
 Steps for the agent:
 
@@ -50,8 +50,8 @@ Steps for the agent:
 2. **Get the templates without running them.** Use a tag that is at least 7 days old
    (release cooldown):
    ```sh
-   git clone --depth 1 --branch v0.3.0 https://github.com/itinance/reviewer-skill.git /tmp/reviewer-skill-v0.3.0
-   git -C /tmp/reviewer-skill-v0.3.0 log -1 --format='%H %cI'   # tag commit and date; compare with the tag on GitHub
+   git clone --depth 1 --branch v0.3.1 https://github.com/itinance/reviewer-skill.git /tmp/reviewer-skill-v0.3.1
+   git -C /tmp/reviewer-skill-v0.3.1 log -1 --format='%H %cI'   # tag commit and date; compare with the tag on GitHub
    ```
    Do not run anything from the clone. Read the files only.
 3. **Copy the 5 files** in the table above with Read and Write. If a destination exists
@@ -66,8 +66,8 @@ Steps for the agent:
      workflows (`.github/workflows/*.yml`, job names). Prefer the project's safe test
      wrapper (for example one with a throwaway database). Copy forbidden commands from
      CLAUDE.md into the gate.
-   - Local runs by reviewers: by default none; the tests reviewer reads the CI results.
-     Allow a local run only if the project wants it, with its exact command.
+   - Local run when CI cannot answer: the install and test command for a throwaway
+     worktree in the real layout, or "none; reviewers use CI only". Reviewers read CI first.
    - Merge method and where decisions are recorded: copy them from CLAUDE.md (for example
      "merge commit; the base is merged into the branch by hand").
    - Supply chain: `.npmrc` (`ignore-scripts`), `pnpm-workspace.yaml` (`minimumReleaseAge`,
@@ -92,7 +92,7 @@ Steps for the agent:
    types load only after a restart of Claude Code or `/agents`. In the same session, start
    each reviewer with `subagent_type: "general-purpose"` and the full text of its agent file
    in the prompt.
-9. **Clean up:** `rm -rf /tmp/reviewer-skill-v0.3.0`.
+9. **Clean up:** `rm -rf /tmp/reviewer-skill-v0.3.1`.
 
 **If the files were already written on the default branch** (for example by an older
 installer): create the branch or worktree, copy the installed files there, apply the
@@ -113,7 +113,7 @@ window in which a hijacked account or a bad publish does the most damage.
 
 ```sh
 npm view reviewer-skill time --json      # publish date of every version
-npm view reviewer-skill@0.3.0 dist.integrity
+npm view reviewer-skill@0.3.1 dist.integrity
 ```
 
 ### 2. Run the installer in a feature branch of your project
@@ -127,11 +127,11 @@ that date, npx stops with `notarget` before it downloads or runs anything.
 
 ```sh
 # macOS
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.0 install --dry-run
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.0 install
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.1 install --dry-run
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.1 install
 
 # Linux
-npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.3.0 install
+npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.3.1 install
 ```
 
 `npx` asks "Ok to proceed?" before it downloads the package. Read it and answer it; do not
@@ -142,7 +142,7 @@ optional `CLAUDE.md` and `.gitignore` edits. Without a terminal (an agent runs i
 creates missing files. An agent names the optional edits explicitly:
 
 ```sh
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.0 install --append-claude-md --gitignore-scratch
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.1 install --append-claude-md --gitignore-scratch
 ```
 
 Both edits are idempotent: the `CLAUDE.md` section is added once (marker check), and the
@@ -152,10 +152,10 @@ question with yes.
 With Bun (Bun does not run lifecycle scripts of packages by default):
 
 ```sh
-bunx reviewer-skill@0.3.0 install
+bunx reviewer-skill@0.3.1 install
 ```
 
-Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.3.0`.
+Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.3.1`.
 
 ### 3. After the install
 
