@@ -115,3 +115,13 @@ test('skill: frontmatter name matches the directory, description says when to us
   assert.match(fm.description, /^Use when /);
   assert.ok(fm.description.length <= 1024);
 });
+
+test('templates: merge mechanics and local runs are left to the project', async () => {
+  // Opinionated rules that projects handle differently; they belong in section 4, not here.
+  const opinionated = /update-branch|never squash|never rebase|squash|--merge\b|merge the base branch into|worktree add|throwaway worktree|decisions table/i;
+  for (const f of templateFiles) {
+    for (const [i, line] of (await fs.readFile(f, 'utf8')).split('\n').entries()) {
+      assert.doesNotMatch(line, opinionated, `${path.relative(ROOT, f)}:${i + 1}`);
+    }
+  }
+});

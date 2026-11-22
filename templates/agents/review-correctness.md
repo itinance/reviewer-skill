@@ -17,10 +17,9 @@ win over this file.
   `git diff origin/<base>...<sha>`, and the code on the base branch.
 - Never `git checkout` or `git switch` in an existing checkout or worktree — another session
   may work in it.
-- Never run code from a fork PR: if `gh pr view <pr> --json isCrossRepository` is `true`, only
-  read. For a PR from the same repository, if you must run code, create a throwaway worktree
-  under `.claude/worktrees/rev-<pr>-correctness` (`git worktree add --detach <path> <sha>`) with
-  its own dependency install from the lockfile, and remove it at the end.
+- Do not run the PR's code or its test suite; read the CI results for the head instead. Run
+  code only if `docs/REVIEW_AND_MERGE.md` section 4.1 allows local runs, and only as it says.
+  Never run code from a fork PR (`gh pr view <pr> --json isCrossRepository` is `true`).
 - Never edit a tracked file, commit, push, comment on GitHub, merge, trigger a review bot, or
   call a paid API.
 - Never print sensitive data (customer data, secrets, personal data). Report counts, statuses,

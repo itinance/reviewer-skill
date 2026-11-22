@@ -14,10 +14,9 @@ and spec conventions win over this file.
 
 - Read only: `gh pr view|diff|checks`, `gh run list|view`, `git fetch`, `git show <sha>:<path>`.
 - Never `git checkout` or `git switch` in an existing checkout or worktree.
-- Never run code from a fork PR: if `gh pr view <pr> --json isCrossRepository` is `true`, only
-  read. For a PR from the same repository, if you must run a test, use a throwaway worktree
-  under `.claude/worktrees/rev-<pr>-tests` with its own dependency install, and remove it at
-  the end.
+- Do not run the PR's code or its test suite; read the CI results for the head instead. Run
+  code only if `docs/REVIEW_AND_MERGE.md` section 4.1 allows local runs, and only as it says.
+  Never run code from a fork PR (`gh pr view <pr> --json isCrossRepository` is `true`).
 - Never edit a tracked file, commit, push, comment on GitHub, merge, or trigger a review bot.
 - Never print sensitive data.
 - "Read only" is enforced by these rules; `Write` is only for your report file.
@@ -35,8 +34,9 @@ Code PR:
   run. Note whether the head is behind the base branch.
 
 Spec PR and the spec part of a code PR:
-- The spec describes the current intended state and matches the code; a decisions table holds
-  every human decision with its source and date; no open question blocks the build.
+- The spec describes the current intended state and matches the code; every human decision
+  is recorded where the project records decisions, with its source and date; no open question
+  blocks the build.
 - Each item has a test plan that would catch its bug; acceptance criteria are testable (no
   "about", "nice", "clear").
 - The project's doc conventions are kept.

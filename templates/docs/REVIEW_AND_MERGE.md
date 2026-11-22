@@ -21,9 +21,9 @@ note, they do not invent one.
   uses. They never edit, never comment on GitHub, never merge.
 - "Read only" is a rule in the agent prompt, not a tool limit. The agents need `Write` for
   the report file, and `Bash` can write anywhere.
-- The reviewers may run PR code only in a throwaway worktree under `.claude/worktrees/`, and
-  only when the PR head is in this repository. For a PR from a fork
-  (`gh pr view <pr> --json isCrossRepository` is `true`), they only read.
+- The reviewers do not run the PR's code or tests unless section 4.1 allows it. The tests
+  reviewer reads the CI results for the head. For a PR from a fork
+  (`gh pr view <pr> --json isCrossRepository` is `true`), nobody runs its code.
 - Each reviewer writes its full report to `.scratch/reviews/<pr>-<area>[-rN].md`
   (git-ignored) and replies with only: the verdict (CLEAN or FINDINGS), the number of
   findings, and a one-line title for each blocking finding.
@@ -46,12 +46,10 @@ note, they do not invent one.
 
 - Merge only when all 3 reviewers are CLEAN on the current head, and every gate in
   section 4 is green.
-- Never start a merge in the same command as a safety check. Run the check on its own and
-  read its result first.
-- Merge with `gh pr merge <pr> --merge --match-head-commit <sha>`. Never squash. Never
-  rebase a PR branch.
-- Never merge the base branch into a work branch. When the head is behind, the merge step
-  runs `gh pr update-branch <pr>`, and the reviewers check CI again on the new head.
+- Merge exactly the head that the reviewers saw clean, with the method from section 4.5
+  (for example `gh pr merge <pr> --match-head-commit <sha>` plus the method flag). Every new
+  head, also one that brings in the base branch, gets a new round first.
+- Run each safety check on its own and read its result before you start the merge.
 - After the merge: CI on the base branch is green.
 
 ## 4. Project gates
@@ -72,10 +70,8 @@ Read the task runner (Justfile, Makefile, package.json scripts), the CI workflow
 - Forbidden commands: TODO(project), for example "plain `pytest` hits the live database"
   (source: CLAUDE.md), or "none".
 - Lint and type check: TODO(project).
-- Dependency install in a throwaway review worktree, from the lockfile, with install
-  scripts off, for the real layout: TODO(project). Examples: `npm ci --ignore-scripts`;
-  `pnpm install --frozen-lockfile --ignore-scripts` (add `--ignore-workspace` for a
-  standalone app inside a workspace); `uv sync --frozen`.
+- Local runs by reviewers: TODO(project). Write "none; reviewers read the CI results" (the
+  default), or the exact command that a reviewer may run and where.
 - CI workflow and job set to compare job counts against: TODO(project).
 
 ### 4.2 Hard rules
@@ -111,12 +107,15 @@ Read `.npmrc`, `pnpm-workspace.yaml` (`minimumReleaseAge`, `onlyBuiltDependencie
   "none". If a bot is used: keep it paused until the 3 reviewers are clean, then trigger it
   once. A pause posted right after `gh pr create` does not stop the first review: open the
   PR as a draft, pause the bot, wait for its confirmation, then mark the PR ready.
-- Checks before a merge (for example "no live deploy running"): TODO(project) or "none".
+- Merge method, and how a branch takes in changes from the base branch: TODO(project), for
+  example "merge commit; the base is merged into the branch by hand" (source: CLAUDE.md).
+- Where human decisions are recorded: TODO(project), for example "the PR body".
+- Checks before a merge: TODO(project) or "none".
 - Paths or PR types that need a human approval: TODO(project) or "none". Use the real
   paths (find them, for example `find . -type d -name versions` for migrations); do not
   assume a framework's default layout.
 
 ## 5. Decisions
 
-- Every human decision on a PR goes into the decisions table of its spec, with the source and
-  the date, in the same turn.
+- Record every human decision on a PR, with the source and the date, in the same turn: where
+  section 4.5 says, else in the PR body.

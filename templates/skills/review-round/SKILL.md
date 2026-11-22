@@ -54,8 +54,8 @@ in the prompt.
   review finding.
 - A finding that needs a design decision goes to the human. Do not decide it. Fix and push
   the other findings as usual. The PR does not merge before the human has answered and the
-  answer is applied. Record the answer in the spec's decisions table (source, date), and put
-  it in the next round message.
+  answer is applied. Record the answer with source and date where section 4.5 of the docs
+  says (else in the PR body), and put it in the next round message.
 - A real bug outside the PR's scope gets its own small PR from the base branch.
 - Push all fixes of the round as one push. Get the new head sha.
 
@@ -89,13 +89,14 @@ Repeat fix → re-round until all 3 are CLEAN on the current head.
 Only when all 3 are CLEAN on the current head, in this order (`docs/REVIEW_AND_MERGE.md`
 sections 3 and 4):
 
-1. If the head is behind the base: `gh pr update-branch <pr>`, then send the new sha to the
-   3 agents as a new round. Start again at "Wait, then read".
-2. Run each gate of section 4 as its own command and read its result. A gate that still
+1. Run each gate of section 4 as its own command and read its result. A gate that still
    says `TODO(project)` does not exist; say so in your report to the human.
-3. In a separate command: `gh pr merge <pr> --merge --match-head-commit <sha>`. Never
-   squash.
-4. Check that CI on the base branch is green after the merge.
+2. Merge exactly the reviewed head, with the method from section 4.5, in a separate
+   command: for example `gh pr merge <pr> --match-head-commit <sha>` plus the method flag.
+3. Check that CI on the base branch is green after the merge.
+
+If the head changed after the clean round (a fix, or changes taken in from the base
+branch), that is a new round first: send the new sha to the same 3 agents.
 
 ## When the human asks to skip a step
 
@@ -112,7 +113,7 @@ PRs"). Do it only after the human confirms, and write the exception in the PR bo
 | Small diff, docs or spec PR | Still all 3 reviewers |
 | Reviewer reports a non-blocking finding | Fix it in this PR |
 | Finding needs a design choice | Ask the human |
-| Head behind base | `gh pr update-branch <pr>`, then the reviewers check CI on the new head |
+| Base branch taken into the PR | New head: a new round to the same 3 agents |
 | PR from a fork | Reviewers only read; nobody runs its code |
 
 ## Common mistakes
