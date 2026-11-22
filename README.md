@@ -48,8 +48,8 @@ Use a version that is at least **7 days** old (release cooldown). A fresh releas
 window in which a hijacked account or a bad publish does the most damage.
 
 ```sh
-npm view @itinance/reviewer-skill time --json      # publish date of every version
-npm view @itinance/reviewer-skill@0.1.0 dist.integrity
+npm view reviewer-skill time --json      # publish date of every version
+npm view reviewer-skill@0.1.0 dist.integrity
 ```
 
 ### 2. Run the installer in your project root
@@ -59,11 +59,11 @@ that date, npx stops with `notarget` before it downloads or runs anything.
 
 ```sh
 # macOS
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" @itinance/reviewer-skill@0.1.0 install --dry-run
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" @itinance/reviewer-skill@0.1.0 install
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.1.0 install --dry-run
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.1.0 install
 
 # Linux
-npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" @itinance/reviewer-skill@0.1.0 install
+npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.1.0 install
 ```
 
 `npx` asks "Ok to proceed?" before it downloads the package. Read it and answer it; do not
@@ -72,7 +72,7 @@ suppress it.
 With Bun (Bun does not run lifecycle scripts of packages by default):
 
 ```sh
-bunx @itinance/reviewer-skill@0.1.0 install
+bunx reviewer-skill@0.1.0 install
 ```
 
 Without the npm registry, from a git tag:
@@ -83,7 +83,7 @@ git -C /tmp/reviewer-skill rev-parse HEAD     # compare with the commit of the v
 node /tmp/reviewer-skill/bin/reviewer-skill.js install --target .
 ```
 
-Do not install it globally. If you must: `npm install -g --ignore-scripts @itinance/reviewer-skill@0.1.0`.
+Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.1.0`.
 
 ### 3. After the install
 
