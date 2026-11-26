@@ -39,7 +39,7 @@ the npm installer copies them. Both start in a feature branch.
 
 This path runs no downloaded code. The agent only reads the templates and writes files.
 Give your Claude Code session this section and the tag to use, for example: *"Install
-reviewer-skill v0.3.1 as described in its README section 'Install with a Claude agent'."*
+reviewer-skill v0.3.2 as described in its README section 'Install with a Claude agent'."*
 
 Steps for the agent:
 
@@ -50,8 +50,8 @@ Steps for the agent:
 2. **Get the templates without running them.** Use a tag that is at least 7 days old
    (release cooldown):
    ```sh
-   git clone --depth 1 --branch v0.3.1 https://github.com/itinance/reviewer-skill.git /tmp/reviewer-skill-v0.3.1
-   git -C /tmp/reviewer-skill-v0.3.1 log -1 --format='%H %cI'   # tag commit and date; compare with the tag on GitHub
+   git clone --depth 1 --branch v0.3.2 https://github.com/itinance/reviewer-skill.git /tmp/reviewer-skill-v0.3.2
+   git -C /tmp/reviewer-skill-v0.3.2 log -1 --format='%H %cI'   # tag commit and date; compare with the tag on GitHub
    ```
    Do not run anything from the clone. Read the files only.
 3. **Copy the 5 files** in the table above with Read and Write. If a destination exists
@@ -92,7 +92,7 @@ Steps for the agent:
    types load only after a restart of Claude Code or `/agents`. In the same session, start
    each reviewer with `subagent_type: "general-purpose"` and the full text of its agent file
    in the prompt.
-9. **Clean up:** `rm -rf /tmp/reviewer-skill-v0.3.1`.
+9. **Clean up:** `rm -rf /tmp/reviewer-skill-v0.3.2`.
 
 **If the files were already written on the default branch** (for example by an older
 installer): create the branch or worktree, copy the installed files there, apply the
@@ -113,7 +113,7 @@ window in which a hijacked account or a bad publish does the most damage.
 
 ```sh
 npm view reviewer-skill time --json      # publish date of every version
-npm view reviewer-skill@0.3.1 dist.integrity
+npm view reviewer-skill@0.3.2 dist.integrity
 ```
 
 ### 2. Run the installer in a feature branch of your project
@@ -129,11 +129,11 @@ cooldown working, not a broken release.
 
 ```sh
 # macOS
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.1 install --dry-run
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.1 install
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.2 install --dry-run
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.2 install
 
 # Linux
-npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.3.1 install
+npx --ignore-scripts --before "$(date -d '7 days ago' +%Y-%m-%d)" reviewer-skill@0.3.2 install
 ```
 
 `npx` asks "Ok to proceed?" before it downloads the package. Read it and answer it; do not
@@ -144,7 +144,7 @@ optional `CLAUDE.md` and `.gitignore` edits. Without a terminal (an agent runs i
 creates missing files. An agent names the optional edits explicitly:
 
 ```sh
-npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.1 install --append-claude-md --gitignore-scratch
+npx --ignore-scripts --before "$(date -v-7d +%Y-%m-%d)" reviewer-skill@0.3.2 install --append-claude-md --gitignore-scratch
 ```
 
 Both edits are idempotent: the `CLAUDE.md` section is added once (marker check), and the
@@ -154,10 +154,10 @@ question with yes.
 With Bun (Bun does not run lifecycle scripts of packages by default):
 
 ```sh
-bunx reviewer-skill@0.3.1 install
+bunx reviewer-skill@0.3.2 install
 ```
 
-Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.3.1`.
+Do not install it globally. If you must: `npm install -g --ignore-scripts reviewer-skill@0.3.2`.
 
 ### 3. After the install
 
@@ -179,7 +179,7 @@ the npm package and this repo. The skill is installed per project, not globally:
 Start a new Claude Code session in the project. A session that was already running during the
 install may not know the skill or the agents yet. Then:
 
-- Type `/review-round` (it shows up in the autocomplete after `/rev`), or just ask for a
+- Type `/review-round` (it shows up in the autocomplete after `/rev`), or ask for a
   review: the skill's description makes Claude load it for review requests.
 - Open `/agents` to see the 3 reviewers.
 

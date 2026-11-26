@@ -1,6 +1,6 @@
 {
   "name": "reviewer-skill",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Installs a 3-reviewer pull-request process (correctness, security, tests) for Claude Code into a project: agents, a review-round skill and a docs template.",
   "keywords": ["claude-code", "claude", "code-review", "agents", "skill", "pull-request"],
   "license": "MIT",
