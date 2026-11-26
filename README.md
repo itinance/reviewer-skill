@@ -123,7 +123,9 @@ The installer refuses to write on the default branch (`origin/HEAD`, else `main`
 Create a branch first: `git switch -c chore/reviewer-skill`.
 
 `--before <date>` lets npm enforce the cooldown: if the pinned version was published after
-that date, npx stops with `notarget` before it downloads or runs anything.
+that date, npx stops with `notarget` before it downloads or runs anything. This also means
+that a new release cannot be installed with this command during its first 7 days. That is the
+cooldown working, not a broken release.
 
 ```sh
 # macOS
@@ -164,6 +166,28 @@ only the installed files, open a draft PR as the first review round, and restart
 (or open `/agents`) so that it loads the new agents.
 
 ## Use
+
+### Find the skill
+
+In Claude Code the skill is called **`review-round`**. `reviewer-skill` is only the name of
+the npm package and this repo. The skill is installed per project, not globally:
+
+- `.claude/skills/review-round/SKILL.md` is the skill.
+- `.claude/agents/review-correctness.md`, `review-security.md` and `review-tests.md` are the
+  3 reviewers.
+
+Start a new Claude Code session in the project. A session that was already running during the
+install may not know the skill or the agents yet. Then:
+
+- Type `/review-round` (it shows up in the autocomplete after `/rev`), or just ask for a
+  review: the skill's description makes Claude load it for review requests.
+- Open `/agents` to see the 3 reviewers.
+
+If the skill does not show up, check that `.claude/skills/review-round/SKILL.md` exists in
+the project root. If it is missing, the install did not run (for example npx stopped with
+`notarget`, see the cooldown above).
+
+### Run a review round
 
 Ask Claude Code: *"Run a review round on PR 123."* The `review-round` skill starts the 3
 agents in parallel as `review-123-correctness`, `review-123-security`, `review-123-tests`,
